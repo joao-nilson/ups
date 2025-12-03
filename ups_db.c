@@ -250,7 +250,6 @@ int main() {
         return 1;
     }
     
-    //print_ups_data(&ups_data);
     //Treat tokens:
     triphase_status(&ups_data);
     int load = high_load(); // if the load gets bigger, send alert
