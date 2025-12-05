@@ -173,6 +173,11 @@ int high_load(ups_d *ups) {
     return load;
 }
 
+int get_load(ups_d *ups) {
+    int l = atoll(ups->tokens[3]);
+    return l;
+}
+
 float get_freq(ups_d *ups) {
     float hz = strtof(ups->tokens[4]);
     return hz;
@@ -250,17 +255,93 @@ int main() {
         return 1;
     }
     
-    //Treat tokens:
-    triphase_status(&ups_data);
-    int load = high_load(); // if the load gets bigger, send alert
-    float frequency = get_freq(&ups_data); // if input line frequency == 0, send alert
-    float temp = get_temp(); // monitor nobreak temp and alert if gets high
+    //Treat tokens
+    //bool p_status = triphase_status(&ups_data);
+    //int load = high_load(&ups_data); // if the load gets bigger, send alert
+    //float frequency = get_freq(&ups_data); // if input line frequency == 0, send alert
+    //float temp = get_temp(&ups_data); // monitor nobreak temp and alert if gets high
     
     flags(ups_data.tokens[7], 8); // if a flag changes status send out a alert
 
+    int status = 0; //status for return of sh scripts
+
+
+    // MAYBE: make get_phase() that return the value of each phase separately
+    // and send alert for each phase
+    if (!triphase_status(&ups_data)) {
+	//one or more phases is down
+	//use system() to send out alert
+	status = system("./phases_alert.sh");
+	printf("Exit status phases_alert.sh: %d\n", status);
+    }
+
+//    int load = get_load(&ups_data);
+//    switch (load) {
+//        case load >= 60:
+//	    status = system("./load_60_alert.sh");
+//	    printf("Exit status load_60_alert.sh: %d\n", status);
+//            break;
+//	case load >= 70:
+//	    status = system("./load_70_alert.sh");
+//            printf("Exit status load_70_alert.sh: %d\n", status);
+//            break;
+//	case load >= 80:
+//	    status = system("./load_70_alert.sh");
+//            printf("Exit status load_70_alert.sh: %d\n", status);
+//            break;
+//	default:
+//	    break;
+//    }
+
+    FILE *fp;
+    char* command = "./no_command.sh";
+    //load alert:
+    command = "./load_alert.sh"; //script will calculate if should send alert
+    int input_load = get_load(&ups_data);
+    
+    fp = popen(command, "w");
+    if (fp == NULL) {
+        perror("Failed to run: load_alert.sh");
+        exit(1);
+    }
+
+    fprintf(fp, "%d\n", input_load); //send input value to script
+    fclose(fp);
+
+    //frequency alert:
+    float frequency = get_freq(&ups_data);
+    if (frequency == 0.0) {
+        status = system("./freq_alert.sh");
+        printf("Exit status freq_alert.sh: %d\n", status);
+    }
+
+    //temp alert:
+    command = "./temp_alert.sh";
+    float temp = get_temp(&ups_data);
+    
+    fp = popen(command, "w");
+    if (fp == NULL) {
+        perror("Failed to run: temp_alert.sh");
+	exit(1); //dont know if i want to end C program if script does not run, remove later
+    }
+
+    fprintf(fp, "%f\n", temp);
+    fclose(fp);
+
+    //binary flags alert:
+    command = "./flag_alert.sh";
+    int f = atoll(ups_data.tokens[7]);
+
+    fp = popen(command, "w");
+    if (fp == NULL) {
+        perror("Failed to run: temp_alert.sh");
+        exit(1); //dont know if i want to end C program if script does not run, remove later
+    }
+
+    fprintf(fp, "%d\n", f);
+    fclose(fp);
 
     cleanup_ups_d(&ups_data);
-    printf("Data processing completed\n");
 
     return 0;
 }
