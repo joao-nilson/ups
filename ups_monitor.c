@@ -382,15 +382,6 @@ int main() {
     print_ups_data(&ups_data);
     
 
-//    //Treat tokens:
-//    triphase_status(&ups_data);
-//    int load = high_load(); // if the load gets bigger, send alert
-//    float frequency = get_freq(&ups_data); // if input line frequency == 0, send alert
-//    float temp = get_temp(); // monitor nobreak temp and alert if gets high
-//    
-//    flags(ups_data.tokens[7], 8); // if a flag changes status send out a alert
-
-
     cleanup_ups_d(&ups_data);
     printf("Data processing completed\n");
 

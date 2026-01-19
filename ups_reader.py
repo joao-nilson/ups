@@ -4,6 +4,7 @@ import time
 import datetime
 import sys
 import subprocess
+import sqlite3
 
 try:
     import serial 
@@ -13,8 +14,8 @@ except ImportError:
     sys.exit(1)
 
 #Compilation&Execution:
-#   gcc -o ups_db ups_db.c -I/usr/include/python3.9 -lpython3.9 -lsqlite3
-#   python ups_serial_reader.py
+#   gcc -o ups_mon ups_monitor.c -I/usr/include/python3.9 -lpython3.9
+#   python ups_reader.py
 
 
 def main():
@@ -91,6 +92,12 @@ def main():
             if stderr:
                 print("C program error:", stderr)
             
+            conn = sqlite3.connect('/var/log/ups/ups-log.db')
+            cursor = conn.cursor()
+
+            #create table if not exist
+            cursor.execute("""CREATE TABLE IF NOT EXISTS status(timestamp TEXT, vphase1 TEXT, vphase2 TEXT, vphase3 TEXT, load TEXT, frequency TEXT, vbattery TEXT, temperature TEXT, flags TEXT)""")
+
             # Parse response
             if '(' in full_response and full_response.count(' ') >= 7:
                 try:
@@ -102,29 +109,44 @@ def main():
                     
                     if len(values) >= 8:
                         v1, v2, v3, load, freq, batt, temp, flags = values[:8]
-                        csv_line = f"{timestamp},{v1},{v2},{v3},{load},{freq},{batt},{temp},{flags}"
-                        print(f"PARSED: {csv_line}")
+                        line = f"{timestamp},{v1},{v2},{v3},{load},{freq},{batt},{temp},{flags}"
+                        print(f"PARSED: {line}")
+                        try:
+                            cursor.execute(
+                                "INSERT INTO status VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (timestamp, v1, v2, v3, load, freq, batt, temp, flags)
+                            )
+                            conn.commit()
+                        except Exception as e:
+                            print("SQLite error: did not write to bd (full)")
                     elif len(values) >= 6:
                         v1, v2, v3, load, freq, batt = values[:6]
-                        csv_line = f"{timestamp},{v1},{v2},{v3},{load},{freq},{batt},UNKNOWN,UNKNOWN"
-                        print(f"PARTIAL: {csv_line}")
+                        line = f"{timestamp},{v1},{v2},{v3},{load},{freq},{batt},UNKNOWN,UNKNOWN"
+                        print(f"PARTIAL: {line}")
+                        try:
+                            cursor.execute(
+                                "INSERT INTO status VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (timestamp, v1, v2, v3, load, freq, batt, "UNKNOWN", "UNKNOWN")
+                            )
+                            conn.commit()
+                        except Exception as e:
+                            print("SQLite error: did not write to db (6val)")
                     else:
-                        csv_line = f"{timestamp},UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN,UNKNOWN"
                         print(f"INCOMPLETE: Only {len(values)} values")
-                    
-                    # Write to log
-                    with open('/var/log/ups/ups_data.csv', 'a') as f:
-                        f.write(csv_line + '\n')
-                        
+                        try:
+                            cursor.execute(
+                                "INSERT INTO status VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                                (timestamp, "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN", "UNKNOWN")
+                            )
+                            conn.commit()
+                        except Exception as e:
+                            print("SQLite did not write to db")
+
                 except Exception as e:
-                    print(f"Parse error: {e}")
-                    with open('/var/log/ups/ups_data.csv', 'a') as f:
-                        f.write(f"{timestamp},ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR,ERROR\n")
-            else:
-                print(f"NO VALID DATA: {full_response}")
-                with open('/var/log/ups/ups_data.csv', 'a') as f:
-                    f.write(f"{timestamp},NO_DATA,NO_DATA,NO_DATA,NO_DATA,NO_DATA,NO_DATA,NO_DATA,NO_DATA\n")
-            
+                    print("Could not parse response")
+
+
+            conn.close()                    
             print(f"Waiting 30 seconds... ({datetime.datetime.now().strftime('%H:%M:%S')})")
             print("="*50)
             time.sleep(30)
