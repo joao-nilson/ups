@@ -75,7 +75,7 @@ def main():
             print(f"Full response: {full_response}")
             
             # Start the C program as a subprocess
-            process = subprocess.Popen(["./ups_db"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+            process = subprocess.Popen(["./ups_mon"],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
 
             # Send the full_response to C program
                 #use stdin to send full response
