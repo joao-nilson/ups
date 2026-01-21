@@ -7,11 +7,11 @@
 #include <stdbool.h>
 
 #define SCRIPT_DIR "./alerts"
-#define PHASE_ALERT_SCRIPT SCRIPT_DIR "phases_alert.sh"
-#define LOAD_ALERT_SCRIPT SCRIPT_DIR "load_alert.sh"
-#define FREQ_ALERT_SCRIPT SCRIPT_DIR "freq_alert.sh"
-#define TEMP_ALERT_SCRIPT SCRIPT_DIR "temp_alert.sh"
-#define FLAG_ALERT_SCRIPT SCRIPT_DIR "flag_alert.sh"
+#define PHASE_ALERT_SCRIPT SCRIPT_DIR "/phases_alert.sh"
+#define LOAD_ALERT_SCRIPT SCRIPT_DIR "/load_alert.sh"
+#define FREQ_ALERT_SCRIPT SCRIPT_DIR "/freq_alert.sh"
+#define TEMP_ALERT_SCRIPT SCRIPT_DIR "/temp_alert.sh"
+#define FLAG_ALERT_SCRIPT SCRIPT_DIR "/flag_alert.sh"
 
 typedef struct {
     char *serial_response;
