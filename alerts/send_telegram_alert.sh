@@ -144,14 +144,14 @@ send_flag_alert() {
     
  <b>Flags (Binary):</b> ${flag_bits}
  <b>Flag Interpretation:</b>
-• Bit 7 (MSB): $((${flag_bits:0:1} == 1 ? " Utility Fail" : " Utility OK"))
-• Bit 6: $((${flag_bits:1:1} == 1 ? " Battery Low" : " Battery OK"))
-• Bit 5: $((${flag_bits:2:1} == 1 ? " Bypass/Boost" : " Normal"))
-• Bit 4: $((${flag_bits:3:1} == 1 ? " UPS Failed" : " UPS OK"))
-• Bit 3: $((${flag_bits:4:1} == 1 ? " Test in Progress" : " No Test"))
-• Bit 2: $((${flag_bits:5:1} == 1 ? " Shutdown Active" : " Normal"))
-• Bit 1: $((${flag_bits:6:1} == 1 ? "Beeper On" : " Beeper Off"))
-• Bit 0 (LSB): $((${flag_bits:7:1} == 1 ? " On Battery" : " On Mains"))
+• Bit 7 (MSB): $([ ${flag_bits:0:1} -eq 1 ] && echo " Utility Fail" || echo " Utility OK")
+• Bit 6: $([ ${flag_bits:1:1} -eq 1 ] && echo " Battery Low" || echo " Battery OK")
+• Bit 5: $([ ${flag_bits:2:1} -eq 1 ] && echo " Bypass/Boost" || echo " Normal")
+• Bit 4: $([ ${flag_bits:3:1} -eq 1 ] && echo " UPS Failed" || echo " UPS OK")
+• Bit 3: $([ ${flag_bits:4:1} -eq 1 ] && echo " Test in Progress" || echo " No Test")
+• Bit 2: $([ ${flag_bits:5:1} -eq 1 ] && echo " Shutdown Active" || echo " Normal")
+• Bit 1: $([ ${flag_bits:6:1} -eq 1 ] && echo "Beeper On" || echo " Beeper Off")
+• Bit 0 (LSB): $([ ${flag_bits:7:1} -eq 1 ] && echo " On Battery" || echo " On Mains")
 
  Time: $(date '+%Y-%m-%d %H:%M:%S')"
 
